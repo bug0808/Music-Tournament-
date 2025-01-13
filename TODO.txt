@@ -1,0 +1,9 @@
+Add bracket on bottom 
+Dynamically update button names with name of songs 
+omit ".mp4" from song names 
+beautify the interface
+
+Stretch:
+    Add youtube integration 
+    make .mp4 files work
+    add way to scrub through song
