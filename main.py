@@ -30,42 +30,38 @@ class Match:
 class Bracket:
     def __init__(self, competitors):
         self.competitors = competitors
-        self.rounds = []  # List to store rounds
-        self.current_round = 0  # Initialize current round
+        self.rounds = []  # List of all rounds
+        self.current_round = 0  # Current round index
         self.generate_bracket()
 
     def generate_bracket(self):
-        """Generate the bracket structure from the list of competitors."""
-        rounds = []
-        competitors = [Competitor(name, "") for name in self.competitors]  # Create Competitor objects
+        """Generate the tournament bracket."""
+        competitors = [Competitor(name, "") for name in self.competitors]
 
-        # Ensure the number of competitors is a power of 2
+        # Ensure competitors count is a power of 2
         next_power_of_2 = 2 ** math.ceil(math.log2(len(competitors)))
         while len(competitors) < next_power_of_2:
-            competitors.append(Competitor("TBD", ""))  # Add "TBD" as a Competitor object
+            competitors.append(Competitor("TBD", ""))
 
-        # Create matches for the first round
-        round_matches = []
-        for i in range(0, len(competitors), 2):
-            round_matches.append(Match(competitors[i], competitors[i+1]))
-        rounds.append(round_matches)
-
-        # Create subsequent rounds based on winners from previous rounds
-        while len(rounds[-1]) > 1:
-            next_round_matches = []
-            for i in range(0, len(rounds[-1]), 2):
-                next_round_matches.append(Match(rounds[-1][i].winner, rounds[-1][i+1].winner))
-            rounds.append(next_round_matches)
-
-        self.rounds = rounds
+        # First round
+        self.rounds.append([Match(competitors[i], competitors[i + 1]) for i in range(0, len(competitors), 2)])
 
     def get_current_round_matches(self):
-        """Return the list of matches for the current round."""
+        """Return the matches for the current round."""
         return self.rounds[self.current_round]
 
-    def next_round(self):
-        """Advance to the next round."""
+    def advance_to_next_round(self):
+        """Move to the next round with the current round's winners."""
+        current_matches = self.get_current_round_matches()
+        winners = [match.get_winner() for match in current_matches if match.get_winner()]
+
+        if len(winners) < 2:
+            return None  # Tournament is over
+
+        next_round_matches = [Match(winners[i], winners[i + 1] if i + 1 < len(winners) else None) for i in range(0, len(winners), 2)]
+        self.rounds.append(next_round_matches)
         self.current_round += 1
+        return next_round_matches
 
 
 
@@ -75,6 +71,7 @@ class MusicTournamentApp:
         self.root = root
         self.root.title("Music Tournament App")
         self.clashes = []  # List to store Clash objects
+        self.winners = []  # Initialize winners as an empty list
         pygame.mixer.init()  # Initialize Pygame mixer for audio playback
 
         self.songs = []  # List of song names
@@ -202,42 +199,34 @@ class MusicTournamentApp:
         self.update_bracket_after_vote(winner_song)
 
     def update_bracket_after_vote(self, winner_song):
-        """Update the bracket after a vote and redraw the visualization."""
+        """Update the bracket after a vote."""
         current_match = self.matches[self.current_round]
 
-        # Ensure that competitors exist
-        if current_match.competitor_a and current_match.competitor_b:
-            # Set the winner in the current match
-            if current_match.competitor_a.name == winner_song:
-                current_match.set_winner(current_match.competitor_a)
-            elif current_match.competitor_b.name == winner_song:
-                current_match.set_winner(current_match.competitor_b)
+        if current_match.competitor_a.name == winner_song:
+            current_match.set_winner(current_match.competitor_a)
+        elif current_match.competitor_b.name == winner_song:
+            current_match.set_winner(current_match.competitor_b)
         else:
-            messagebox.showerror("Error", "One or both competitors are not properly initialized.")
+            messagebox.showerror("Error", "Invalid vote.")
             return
 
-        # Advance to the next round
+        # Advance to the next match
         if self.current_round + 1 < len(self.matches):
             self.current_round += 1
             self.show_match()
         else:
-            # Move to the next round of matches
-            self.tournament.next_round()  # Advance to the next round in the bracket
-            self.matches = self.tournament.get_current_round_matches()
+            self.prepare_next_round()
 
-            # If no more rounds, declare the winner
-            if not self.matches:
-                # Assuming the final match is the last match in the bracket
-                final_match = self.matches[-1] if self.matches else None
-                if final_match and final_match.competitor_a and final_match.competitor_b:
-                    winner = final_match.get_winner()
-                    messagebox.showinfo("Tournament Over", f"The winner is {winner.name}!")
-                else:
-                    messagebox.showinfo("Tournament Over", "The final match is incomplete.")
-                self.root.quit()
-            else:
-                self.current_round = 0  # Reset to first match in the new round
-                self.show_match()
+    def prepare_next_round(self):
+        """Prepare the next round."""
+        next_round_matches = self.tournament.advance_to_next_round()
+        if not next_round_matches:
+            messagebox.showinfo("Tournament Over", "The tournament is complete!")
+            return
+
+        self.matches = next_round_matches
+        self.current_round = 0
+        self.show_match()
 
     def update_bracket(self):
         """Update the bracket visualization after a song wins."""
