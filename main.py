@@ -80,7 +80,7 @@ class MusicTournamentApp:
         self.song_listbox = tk.Listbox(root)
         self.song_listbox.pack()
 
-        self.upload_button = tk.Button(root, text="Upload Song", command=self.upload_song)
+        self.upload_button = tk.Button(root, text="Upload Song", command=self.upload_songs)
         self.upload_button.pack()
 
         self.play_button = tk.Button(root, text="Start Tournament", command=self.start_tournament)
@@ -107,20 +107,21 @@ class MusicTournamentApp:
         self.matches = []
         self.current_round = 0
 
-    def upload_song(self):
-        """Allow user to upload a song by browsing the file system."""
-        file_path = filedialog.askopenfilename(
-            title="Select a Song",
+    def upload_songs(self):
+        """Allow user to upload multiple songs by browsing the file system."""
+        file_paths = filedialog.askopenfilenames(
+            title="Select Songs",
             filetypes=(("MP3 files", "*.mp3"), ("All files", "*.*"))
         )
-        if not file_path:
+        if not file_paths:
             return
 
-        song_name = file_path.split("/")[-1]
-        self.songs.append(song_name)
-        self.songs_paths.append(file_path)  # Store the file path as well
-        self.song_listbox.insert(tk.END, song_name)
-        print(f"Uploaded: {song_name} from {file_path}")
+        for file_path in file_paths:
+            song_name = file_path.split("/")[-1]
+            self.songs.append(song_name)
+            self.songs_paths.append(file_path)  # Store the file path as well
+            self.song_listbox.insert(tk.END, song_name)
+            print(f"Uploaded: {song_name} from {file_path}")
 
     def start_tournament(self):
         if len(self.songs) < 2:
@@ -221,7 +222,10 @@ class MusicTournamentApp:
         """Prepare the next round."""
         next_round_matches = self.tournament.advance_to_next_round()
         if not next_round_matches:
-            messagebox.showinfo("Tournament Over", "The tournament is complete!")
+            # Tournament is complete, show the winner
+            final_match = self.tournament.rounds[-1][0]  # Get the final match
+            winner = final_match.get_winner().name if final_match.get_winner() else "TBD"
+            messagebox.showinfo("Tournament Winner", f"The winner is: {winner}")
             return
 
         self.matches = next_round_matches
