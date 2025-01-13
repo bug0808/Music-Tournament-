@@ -98,8 +98,11 @@ class MusicTournamentApp:
         self.song2_label = tk.Label(root, text="Song 2:")
         self.song2_label.pack()
 
-        self.swap_button = tk.Button(root, text="Swap Songs", command=self.swap_songs, state=tk.DISABLED)
-        self.swap_button.pack()
+        self.play_song1_button = tk.Button(root, text="Play Song 1", command=self.play_song1, state=tk.DISABLED)
+        self.play_song1_button.pack()
+
+        self.play_song2_button = tk.Button(root, text="Play Song 2", command=self.play_song2, state=tk.DISABLED)
+        self.play_song2_button.pack()
 
         self.canvas = tk.Canvas(root, width=800, height=600)
         self.canvas.pack()
@@ -147,47 +150,26 @@ class MusicTournamentApp:
             self.song2_label.config(text=f"Song 2: {song2}")
             self.vote_button1.config(state=tk.NORMAL)
             self.vote_button2.config(state=tk.NORMAL)
-            self.swap_button.config(state=tk.NORMAL)
+            self.play_song1_button.config(state=tk.NORMAL)
+            self.play_song2_button.config(state=tk.NORMAL)
 
             # Get the file paths for the songs (use the list of file paths)
             song1_path = self.songs_paths[self.songs.index(song1)] if song1 != "TBD" else None
             song2_path = self.songs_paths[self.songs.index(song2)] if song2 != "TBD" else None
 
-            if song1_path and song2_path:
-                self.play_song(song1_path, song2_path)  # Pass the paths of the songs
+            self.current_songs = (song1_path, song2_path)
 
-    
-    def play_song(self, song1_path, song2_path):
-        """Play the selected song."""
-        # Check if song paths are valid
-        if not song1_path or not song2_path:
-            print("Error: Invalid song paths")
-            return
-
-        # Run the play function in a separate thread
-        threading.Thread(target=self.play, args=(song1_path, song2_path), daemon=True).start()
-
-    def play(self, song1_path, song2_path):
-        """Helper function to play the songs in sequence."""
-        # Load and play Song 1
+    def play_song1(self):
+        song1_path, _ = self.current_songs
         if song1_path:
             pygame.mixer.music.load(song1_path)
             pygame.mixer.music.play()
-            # Wait until the song finishes
-            while pygame.mixer.music.get_busy():
-                pygame.time.Clock().tick(10)
 
-        # Load and play Song 2
+    def play_song2(self):
+        _, song2_path = self.current_songs
         if song2_path:
             pygame.mixer.music.load(song2_path)
             pygame.mixer.music.play()
-            # Wait until the song finishes
-            while pygame.mixer.music.get_busy():
-                pygame.time.Clock().tick(10)
-
-    def swap_songs(self):
-        """Swap between the two playing songs."""
-        pass  # TODO: Implement functionality to swap songs.
 
     def vote_for_song_1(self):
         """Vote for Song 1 as the winner of the current match."""
