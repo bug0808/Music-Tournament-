@@ -1,5 +1,4 @@
-Make canvas scrollable in both horizontal and vertical directions
-
+Get proper pausing and stopping of songs including when it goes to a new round
 
 Stretch:
     Add youtube integration 

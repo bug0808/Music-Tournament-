@@ -130,13 +130,24 @@ class MusicTournamentApp:
         self.volume_slider.grid(row=5, column=1, pady=5)
 
         # Create a frame for the canvas (bracket visualization)
-        self.bracket_frame = tk.Frame(root)
+        self.bracket_frame = ttk.Frame(root)
         self.bracket_frame.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True, padx=10, pady=10)
 
+        # Add scrollbars for the canvas
+        self.h_scrollbar = tk.Scrollbar(self.bracket_frame, orient=tk.HORIZONTAL)
+        self.h_scrollbar.pack(side=tk.BOTTOM, fill=tk.X)
+
+        self.v_scrollbar = tk.Scrollbar(self.bracket_frame, orient=tk.VERTICAL)
+        self.v_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
         # Style and create the canvas
-        self.canvas = tk.Canvas(self.bracket_frame, width=800, height=600)
-        self.canvas.pack(fill=tk.BOTH, expand=True)
+        self.canvas = tk.Canvas(self.bracket_frame, width=800, height=600, scrollregion=(0,0,2000,2000))
+        self.canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         self.canvas.config(bg="mediumpurple1")
+        
+        self.canvas.config(xscrollcommand=self.h_scrollbar.set, yscrollcommand=self.v_scrollbar.set)
+        self.h_scrollbar.config(command=self.canvas.xview)
+        self.v_scrollbar.config(command=self.canvas.yview)
 
         # Initialize matches and current round
         self.matches = []
@@ -280,6 +291,12 @@ class MusicTournamentApp:
         box_height = 30      # Height of each match box
         start_x = 50         # Starting x-coordinate for the first round
         start_y = 50         # Starting y-coordinate
+
+        # Calculate the canvas scrollregion dynamically
+        max_x = start_x + round_spacing * len(self.tournament.rounds)
+        max_y = start_y + match_spacing * max(len(round_matches) for round_matches in self.tournament.rounds)
+        self.canvas.config(scrollregion=(0, 0, max_x + 100, max_y + 100))
+
 
         for round_idx, round_matches in enumerate(self.tournament.rounds):
             x = start_x + round_idx * round_spacing  # X-coordinate for the current round
