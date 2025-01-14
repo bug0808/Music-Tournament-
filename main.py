@@ -1,8 +1,10 @@
 import tkinter as tk
-from tkinter import filedialog, messagebox
+from tkinter import filedialog, messagebox, ttk
 import pygame
 import random
 import math
+import os
+from styles import configure_styles
 import threading
 
 class Competitor:
@@ -70,58 +72,76 @@ class MusicTournamentApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Music Tournament App")
+        
+        # Initialize Pygame mixer for audio playback
+        pygame.mixer.init()
+
+        # Initialize variables
         self.clashes = []  # List to store Clash objects
         self.winners = []  # Initialize winners as an empty list
-        pygame.mixer.init()  # Initialize Pygame mixer for audio playback
-
         self.songs = []  # List of song names
         self.songs_paths = []  # List of song file paths
         self.tournament = None  # Tournament object to manage rounds
 
+        # Apply styles using the imported function
+        self.style = configure_styles(self.root)
+
         # Create a frame for buttons and labels
-        self.top_frame = tk.Frame(root)
+        self.top_frame = ttk.Frame(root)
         self.top_frame.pack(side=tk.TOP, fill=tk.X, padx=10, pady=10)
 
-        self.song_listbox = tk.Listbox(self.top_frame, height=6)
-        self.song_listbox.grid(row=0, column=0, columnspan=2, sticky="w")
-
-        self.upload_button = tk.Button(self.top_frame, text="Upload Song", command=self.upload_songs)
+        # Create and style Listbox
+        self.song_listbox = tk.Listbox(self.top_frame, height=6, selectmode=tk.SINGLE)
+        self.song_listbox.grid(row=0, column=0, columnspan=2, sticky="w", pady=5)
+        
+        # Create buttons with dark mode styles
+        self.upload_button = ttk.Button(self.top_frame, text="Upload Song", command=self.upload_songs)
         self.upload_button.grid(row=1, column=0, sticky="w", pady=5)
 
-        self.play_button = tk.Button(self.top_frame, text="Start Tournament", command=self.start_tournament)
+        self.play_button = ttk.Button(self.top_frame, text="Start Tournament", command=self.start_tournament)
         self.play_button.grid(row=1, column=1, sticky="w", pady=5)
 
-        self.song1_label = tk.Label(self.top_frame, text="Song 1: TBD")
+        # Labels for Song 1 and Song 2
+        self.song1_label = ttk.Label(self.top_frame, text="Song 1: TBD")
         self.song1_label.grid(row=2, column=0, sticky="w")
 
-        self.song2_label = tk.Label(self.top_frame, text="Song 2: TBD")
+        self.song2_label = ttk.Label(self.top_frame, text="Song 2: TBD")
         self.song2_label.grid(row=2, column=1, sticky="w")
 
-        self.vote_button1 = tk.Button(self.top_frame, text="Vote for Song 1", command=self.vote_for_song_1, state=tk.DISABLED)
+        # Vote buttons with dark mode styles
+        self.vote_button1 = ttk.Button(self.top_frame, text="Vote for Song 1", command=self.vote_for_song_1, state=tk.DISABLED)
         self.vote_button1.grid(row=3, column=0, pady=5)
 
-        self.vote_button2 = tk.Button(self.top_frame, text="Vote for Song 2", command=self.vote_for_song_2, state=tk.DISABLED)
+        self.vote_button2 = ttk.Button(self.top_frame, text="Vote for Song 2", command=self.vote_for_song_2, state=tk.DISABLED)
         self.vote_button2.grid(row=3, column=1, pady=5)
 
-        self.play_song1_button = tk.Button(self.top_frame, text="Play Song 1", command=self.play_song1, state=tk.NORMAL)
+        # Play Song buttons with dark mode styles
+        self.play_song1_button = ttk.Button(self.top_frame, text="Play Song 1", command=self.play_song1, state=tk.NORMAL)
         self.play_song1_button.grid(row=4, column=0, pady=5)
 
-        self.play_song2_button = tk.Button(self.top_frame, text="Play Song 2", command=self.play_song2, state=tk.NORMAL)
+        self.play_song2_button = ttk.Button(self.top_frame, text="Play Song 2", command=self.play_song2, state=tk.NORMAL)
         self.play_song2_button.grid(row=4, column=1, pady=5)
 
-        # self.stop_button = tk.Button(self.top_frame, text="Stop Audio", command=self.stop_audio, state=tk.NORMAL)
-        # self.stop_button.grid(row=5, column=0, pady=5)
+        self.volume_label = ttk.Label(self.top_frame, text="Volume:")
+        self.volume_label.grid(row=5, column=0, sticky="w", pady=5)
 
+        self.volume_slider = tk.Scale(self.top_frame, from_=0, to=100, orient=tk.HORIZONTAL, command=self.adjust_volume)
+        self.volume_slider.set(50)  # Set initial volume to 50%
+        self.volume_slider.grid(row=5, column=1, pady=5)
 
         # Create a frame for the canvas (bracket visualization)
         self.bracket_frame = tk.Frame(root)
         self.bracket_frame.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True, padx=10, pady=10)
 
-        self.canvas = tk.Canvas(self.bracket_frame, width=800, height=600, bg="white")
+        # Style and create the canvas
+        self.canvas = tk.Canvas(self.bracket_frame, width=800, height=600)
         self.canvas.pack(fill=tk.BOTH, expand=True)
+        self.canvas.config(bg="mediumpurple1")
 
+        # Initialize matches and current round
         self.matches = []
         self.current_round = 0
+
 
     def upload_songs(self):
         """Allow user to upload multiple songs by browsing the file system."""
@@ -133,11 +153,16 @@ class MusicTournamentApp:
             return
 
         for file_path in file_paths:
-            song_name = file_path.split("/")[-1]
+            song_name = os.path.splitext(file_path.split("/")[-1])[0]  # Remove .mp3 extension
             self.songs.append(song_name)
             self.songs_paths.append(file_path)  # Store the file path as well
             self.song_listbox.insert(tk.END, song_name)
             print(f"Uploaded: {song_name} from {file_path}")
+            
+    def adjust_volume(self, volume):
+        """Adjust the volume of the music."""
+        volume = int(volume) / 100  # Convert to a range between 0 and 1
+        pygame.mixer.music.set_volume(volume)
 
     def start_tournament(self):
         if len(self.songs) < 2:
@@ -162,8 +187,8 @@ class MusicTournamentApp:
             # Display the songs
             self.song1_label.config(text=f"Song 1: {song1}")
             self.song2_label.config(text=f"Song 2: {song2}")
-            self.vote_button1.config(state=tk.NORMAL)
-            self.vote_button2.config(state=tk.NORMAL)
+            self.vote_button1.config(text=f"Vote for {song1}",state=tk.NORMAL)
+            self.vote_button2.config(text=f"Vote for {song2}",state=tk.NORMAL)
             self.play_song1_button.config(state=tk.NORMAL)
             self.play_song2_button.config(state=tk.NORMAL)
 
@@ -288,7 +313,7 @@ class MusicTournamentApp:
 
                 # Draw winner information
                 if round_idx + 1 == len(self.tournament.rounds):  # If this is the last round
-                    self.canvas.create_text(x + box_width + 20, y + box_height // 2 + 10, text=f"Winner: {winner_name}", anchor="w", fill="green")
+                    self.canvas.create_text(x + box_width + 20, y + box_height // 2 + 10, text=f"Winner: {winner_name}", anchor="w", fill="gold")
 
 if __name__ == "__main__":
     root = tk.Tk()

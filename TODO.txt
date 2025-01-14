@@ -1,6 +1,5 @@
-Dynamically update button names with name of songs 
-omit ".mp3" from song names 
-beautify the interface
+Make canvas scrollable in both horizontal and vertical directions
+
 
 Stretch:
     Add youtube integration 
