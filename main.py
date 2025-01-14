@@ -77,35 +77,48 @@ class MusicTournamentApp:
         self.songs = []  # List of song names
         self.songs_paths = []  # List of song file paths
         self.tournament = None  # Tournament object to manage rounds
-        self.song_listbox = tk.Listbox(root)
-        self.song_listbox.pack()
 
-        self.upload_button = tk.Button(root, text="Upload Song", command=self.upload_songs)
-        self.upload_button.pack()
+        # Create a frame for buttons and labels
+        self.top_frame = tk.Frame(root)
+        self.top_frame.pack(side=tk.TOP, fill=tk.X, padx=10, pady=10)
 
-        self.play_button = tk.Button(root, text="Start Tournament", command=self.start_tournament)
-        self.play_button.pack()
+        self.song_listbox = tk.Listbox(self.top_frame, height=6)
+        self.song_listbox.grid(row=0, column=0, columnspan=2, sticky="w")
 
-        self.vote_button1 = tk.Button(root, text="Vote for Song 1", command=self.vote_for_song_1, state=tk.DISABLED)
-        self.vote_button1.pack()
+        self.upload_button = tk.Button(self.top_frame, text="Upload Song", command=self.upload_songs)
+        self.upload_button.grid(row=1, column=0, sticky="w", pady=5)
 
-        self.vote_button2 = tk.Button(root, text="Vote for Song 2", command=self.vote_for_song_2, state=tk.DISABLED)
-        self.vote_button2.pack()
+        self.play_button = tk.Button(self.top_frame, text="Start Tournament", command=self.start_tournament)
+        self.play_button.grid(row=1, column=1, sticky="w", pady=5)
 
-        self.song1_label = tk.Label(root, text="Song 1:")
-        self.song1_label.pack()
+        self.song1_label = tk.Label(self.top_frame, text="Song 1: TBD")
+        self.song1_label.grid(row=2, column=0, sticky="w")
 
-        self.song2_label = tk.Label(root, text="Song 2:")
-        self.song2_label.pack()
+        self.song2_label = tk.Label(self.top_frame, text="Song 2: TBD")
+        self.song2_label.grid(row=2, column=1, sticky="w")
 
-        self.play_song1_button = tk.Button(root, text="Play Song 1", command=self.play_song1, state=tk.DISABLED)
-        self.play_song1_button.pack()
+        self.vote_button1 = tk.Button(self.top_frame, text="Vote for Song 1", command=self.vote_for_song_1, state=tk.DISABLED)
+        self.vote_button1.grid(row=3, column=0, pady=5)
 
-        self.play_song2_button = tk.Button(root, text="Play Song 2", command=self.play_song2, state=tk.DISABLED)
-        self.play_song2_button.pack()
+        self.vote_button2 = tk.Button(self.top_frame, text="Vote for Song 2", command=self.vote_for_song_2, state=tk.DISABLED)
+        self.vote_button2.grid(row=3, column=1, pady=5)
 
-        self.canvas = tk.Canvas(root, width=800, height=600)
-        self.canvas.pack()
+        self.play_song1_button = tk.Button(self.top_frame, text="Play Song 1", command=self.play_song1, state=tk.NORMAL)
+        self.play_song1_button.grid(row=4, column=0, pady=5)
+
+        self.play_song2_button = tk.Button(self.top_frame, text="Play Song 2", command=self.play_song2, state=tk.NORMAL)
+        self.play_song2_button.grid(row=4, column=1, pady=5)
+
+        # self.stop_button = tk.Button(self.top_frame, text="Stop Audio", command=self.stop_audio, state=tk.NORMAL)
+        # self.stop_button.grid(row=5, column=0, pady=5)
+
+
+        # Create a frame for the canvas (bracket visualization)
+        self.bracket_frame = tk.Frame(root)
+        self.bracket_frame.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True, padx=10, pady=10)
+
+        self.canvas = tk.Canvas(self.bracket_frame, width=800, height=600, bg="white")
+        self.canvas.pack(fill=tk.BOTH, expand=True)
 
         self.matches = []
         self.current_round = 0
@@ -133,6 +146,7 @@ class MusicTournamentApp:
         self.tournament = Bracket(self.songs)  # Create the bracket with uploaded songs
         self.matches = self.tournament.rounds[0]  # Initialize matches with the first round's matches
         self.current_round = 0
+        self.update_ui()  # Call the centralized UI update
         self.show_match()
 
     def show_match(self):
@@ -197,7 +211,8 @@ class MusicTournamentApp:
         if self.current_round + 1 < len(self.matches):
             self.current_round += 1
             self.show_match()
-        else:
+        else: 
+            self.update_ui()  # Update UI after a vote
             self.prepare_next_round()
 
     def prepare_next_round(self):
@@ -208,8 +223,10 @@ class MusicTournamentApp:
             final_match = self.tournament.rounds[-1][0]  # Get the final match
             winner = final_match.get_winner().name if final_match.get_winner() else "TBD"
             messagebox.showinfo("Tournament Winner", f"The winner is: {winner}")
+            self.update_ui()  # Update UI after a vote
             return
-
+        
+        self.update_ui()  # Update UI after a vote
         self.matches = next_round_matches
         self.current_round = 0
         self.show_match()
@@ -219,38 +236,59 @@ class MusicTournamentApp:
         self.canvas.delete("all")
         self.draw_bracket()
 
+    def update_ui(self):
+        self.show_match()  # Show the current match
+        self.draw_bracket()  # Redraw the bracket
+
     def draw_bracket(self):
-        """Draw the bracket on the canvas based on current matches."""
-        x_spacing = 200
-        y_spacing = 60
-        y_start = 50
+        """Draw the bracket on the canvas based on the current tournament state."""
+        print("Drawing the bracket...")  # Debugging statement
+        self.canvas.delete("all")  # Clear the canvas
 
-        round_count = len(self.tournament.rounds)
+        if not self.tournament:
+            return
 
-        for round_num in range(round_count):
-            matches_in_round = len(self.tournament.rounds[round_num])
-            y_offset = y_start + round_num * (y_spacing * matches_in_round)
+        # Constants for drawing
+        round_spacing = 200  # Space between rounds
+        match_spacing = 80   # Space between matches within a round
+        box_width = 150      # Width of each match box
+        box_height = 30      # Height of each match box
+        start_x = 50         # Starting x-coordinate for the first round
+        start_y = 50         # Starting y-coordinate
 
-            for match_idx in range(matches_in_round):
-                match = self.tournament.rounds[round_num][match_idx]
+        for round_idx, round_matches in enumerate(self.tournament.rounds):
+            x = start_x + round_idx * round_spacing  # X-coordinate for the current round
 
-                x_offset = 50 + (round_num * x_spacing)
+            for match_idx, match in enumerate(round_matches):
+                # Calculate the y-coordinate for this match
+                y = start_y + match_idx * match_spacing
 
-                song1_name = match.competitor_a.name if match.competitor_a else "TBD"
-                song2_name = match.competitor_b.name if match.competitor_b else "TBD"
+                # Get competitors' names
+                competitor_a_name = match.competitor_a.name if match.competitor_a else "TBD"
+                competitor_b_name = match.competitor_b.name if match.competitor_b else "TBD"
                 winner_name = match.get_winner().name if match.get_winner() else "TBD"
 
-                self.canvas.create_text(x_offset, y_offset, text=song1_name, anchor="w", fill="blue")
-                self.canvas.create_text(x_offset, y_offset + 20, text=song2_name, anchor="w", fill="red")
-                self.canvas.create_text(x_offset + 100, y_offset + 10, text=f"Winner: {winner_name}", anchor="w", fill="green")
+                # Draw boxes for the competitors
+                self.canvas.create_rectangle(x, y, x + box_width, y + box_height, outline="black", fill="lightblue")
+                self.canvas.create_text(x + 5, y + box_height // 2, text=competitor_a_name, anchor="w")
 
-                if match_idx < len(self.tournament.rounds[round_num]) - 1:
-                    next_x_offset = x_offset + x_spacing
-                    next_y_offset = y_start + (y_spacing * (match_idx + 1))
-                    self.canvas.create_line(x_offset + 150, y_offset + 10, next_x_offset, next_y_offset, fill="black")
+                self.canvas.create_rectangle(x, y + box_height + 10, x + box_width, y + 2 * box_height + 10, outline="black", fill="lightcoral")
+                self.canvas.create_text(x + 5, y + box_height + 10 + box_height // 2, text=competitor_b_name, anchor="w")
 
-                y_offset += y_spacing
+                # If this is not the last round, draw lines to the next round
+                if round_idx + 1 < len(self.tournament.rounds):
+                    next_x = x + round_spacing
+                    next_match_idx = match_idx // 2
+                    next_y = start_y + next_match_idx * match_spacing + box_height // 2
+                    mid_y = y + box_height + 5  # Midpoint of the current match
 
+                    # Draw connecting lines
+                    self.canvas.create_line(x + box_width, mid_y, next_x, next_y, fill="black")
+                    self.canvas.create_line(x + box_width, mid_y + box_height, next_x, next_y, fill="black")
+
+                # Draw winner information
+                if round_idx + 1 == len(self.tournament.rounds):  # If this is the last round
+                    self.canvas.create_text(x + box_width + 20, y + box_height // 2 + 10, text=f"Winner: {winner_name}", anchor="w", fill="green")
 
 if __name__ == "__main__":
     root = tk.Tk()

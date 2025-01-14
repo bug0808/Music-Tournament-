@@ -1,6 +1,5 @@
-Add bracket on bottom 
 Dynamically update button names with name of songs 
-omit ".mp4" from song names 
+omit ".mp3" from song names 
 beautify the interface
 
 Stretch:
