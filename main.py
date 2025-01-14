@@ -82,6 +82,7 @@ class MusicTournamentApp:
         self.songs = []  # List of song names
         self.songs_paths = []  # List of song file paths
         self.tournament = None  # Tournament object to manage rounds
+        self.is_paused = False #Tracks if music is paused
 
         # Apply styles using the imported function
         self.style = configure_styles(self.root)
@@ -129,6 +130,19 @@ class MusicTournamentApp:
         self.volume_slider.set(50)  # Set initial volume to 50%
         self.volume_slider.grid(row=5, column=1, pady=5)
 
+        # Create control buttons
+        control_frame = tk.Frame(root)
+        control_frame.pack(side=tk.TOP, pady=10)
+
+        self.stop_button = ttk.Button(control_frame, text="Stop Song", command=self.stop_song)
+        self.stop_button.pack(side=tk.LEFT, padx=5)
+
+        self.pause_button = ttk.Button(control_frame, text="Pause Song", command=self.pause_song)
+        self.pause_button.pack(side=tk.LEFT, padx=5)
+
+        self.resume_button = ttk.Button(control_frame, text="Resume Song", command=self.resume_song)
+        self.resume_button.pack(side=tk.LEFT, padx=5)
+
         # Create a frame for the canvas (bracket visualization)
         self.bracket_frame = ttk.Frame(root)
         self.bracket_frame.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True, padx=10, pady=10)
@@ -174,6 +188,25 @@ class MusicTournamentApp:
         """Adjust the volume of the music."""
         volume = int(volume) / 100  # Convert to a range between 0 and 1
         pygame.mixer.music.set_volume(volume)
+
+
+    def stop_song(self):
+        """Stop the currently playing song."""
+        pygame.mixer.music.stop()
+        self.is_paused = False
+
+    def pause_song(self):
+        """Pause the currently playing song."""
+        if not self.is_paused:
+            pygame.mixer.music.pause()
+            self.is_paused = True
+
+    def resume_song(self):
+        """Resume the currently paused song."""
+        if self.is_paused:
+            pygame.mixer.music.unpause()
+            self.is_paused = False
+
 
     def start_tournament(self):
         if len(self.songs) < 2:
