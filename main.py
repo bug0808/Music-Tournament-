@@ -1,11 +1,11 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 import pygame
-import random
+from pytubefix import YouTube
 import math
 import os
 from styles import configure_styles
-import threading
+
 
 class Competitor:
     def __init__(self, name, file_path):
@@ -130,6 +130,17 @@ class MusicTournamentApp:
         self.volume_slider.set(50)  # Set initial volume to 50%
         self.volume_slider.grid(row=5, column=1, pady=5)
 
+        # New YouTube URL entry and download button
+        self.youtube_label = ttk.Label(self.top_frame, text="YouTube URL:")
+        self.youtube_label.grid(row=6, column=0, sticky="w", pady=5)
+
+        self.youtube_entry = ttk.Entry(self.top_frame, width=40)
+        self.youtube_entry.grid(row=6, column=1, pady=5)
+
+        self.youtube_button = ttk.Button(self.top_frame, text="Add YouTube Song", command=self.add_youtube_song)
+        self.youtube_button.grid(row=7, column=0, columnspan=2, pady=5)
+
+
         # Create control buttons
         control_frame = tk.Frame(root)
         control_frame.pack(side=tk.TOP, pady=10)
@@ -167,6 +178,30 @@ class MusicTournamentApp:
         self.matches = []
         self.current_round = 0
 
+    def add_youtube_song(self):
+        """Download audio from a YouTube URL and add it as a song."""
+        url = self.youtube_entry.get().strip()
+        if not url:
+            messagebox.showerror("Error", "Please enter a valid YouTube URL.")
+            return
+
+        try:
+            yt = YouTube(url)
+            audio_stream = yt.streams.filter(only_audio=True).first()
+            output_dir = "downloads"
+            os.makedirs(output_dir, exist_ok=True)
+            file_path = audio_stream.download(output_dir)
+            new_file_path = os.path.splitext(file_path)[0] + ".mp3"
+            os.rename(file_path, new_file_path)
+
+            song_name = yt.title
+            self.songs.append(song_name)
+            self.songs_paths.append(new_file_path)
+            self.song_listbox.insert(tk.END, song_name)
+
+            messagebox.showinfo("Success", f"Downloaded and added: {song_name}")
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to download from YouTube: {e}")
 
     def upload_songs(self):
         """Allow user to upload multiple songs by browsing the file system."""

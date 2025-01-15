@@ -1,6 +1,5 @@
-Get proper pausing and stopping of songs including when it goes to a new round
+Add playlist integration and fix youtube playback issues
 
-Stretch:
-    Add youtube integration 
+Stretch:   
     make .mp4 files work
     add way to scrub through song
