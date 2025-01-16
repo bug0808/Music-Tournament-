@@ -188,13 +188,27 @@ class MusicTournamentApp:
         try:
             yt = YouTube(url)
             audio_stream = yt.streams.filter(only_audio=True).first()
+
+            if not audio_stream:
+                messagebox.showerror("Error", "No audio streams found for this video.")
+                return
+
             output_dir = "downloads"
             os.makedirs(output_dir, exist_ok=True)
+
+            # Download and save as .mp3
             file_path = audio_stream.download(output_dir)
             new_file_path = os.path.splitext(file_path)[0] + ".mp3"
-            os.rename(file_path, new_file_path)
+            if not new_file_path.endswith(".mp3"):
+                os.rename(file_path, new_file_path)
 
+            # Avoid duplicates
             song_name = yt.title
+            if song_name in self.songs:
+                messagebox.showwarning("Duplicate Song", f"{song_name} is already in the list.")
+                return
+
+            # Append the song and path
             self.songs.append(song_name)
             self.songs_paths.append(new_file_path)
             self.song_listbox.insert(tk.END, song_name)
@@ -202,7 +216,7 @@ class MusicTournamentApp:
             messagebox.showinfo("Success", f"Downloaded and added: {song_name}")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to download from YouTube: {e}")
-
+            
     def upload_songs(self):
         """Allow user to upload multiple songs by browsing the file system."""
         file_paths = filedialog.askopenfilenames(
@@ -279,15 +293,20 @@ class MusicTournamentApp:
 
     def play_song1(self):
         song1_path, _ = self.current_songs
-        if song1_path:
+        if song1_path and os.path.exists(song1_path):  # Ensure file exists
             pygame.mixer.music.load(song1_path)
             pygame.mixer.music.play()
+        else:
+            messagebox.showerror("Error", "Song file not found!")
 
     def play_song2(self):
         _, song2_path = self.current_songs
-        if song2_path:
+        if song2_path and os.path.exists(song2_path):  # Ensure file exists
             pygame.mixer.music.load(song2_path)
             pygame.mixer.music.play()
+        else:
+            messagebox.showerror("Error", "Song file not found!")
+
 
     def vote_for_song_1(self):
         """Vote for Song 1 as the winner of the current match."""

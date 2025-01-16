@@ -1,4 +1,4 @@
-Add playlist integration and fix youtube playback issues
+Add playlist integration and fix youtube file path issues
 
 Stretch:   
     make .mp4 files work
