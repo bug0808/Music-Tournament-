@@ -5,7 +5,7 @@ from pytubefix import YouTube
 import math
 import os
 from styles import configure_styles
-
+from pydub import AudioSegment
 
 class Competitor:
     def __init__(self, name, file_path):
@@ -196,11 +196,21 @@ class MusicTournamentApp:
             output_dir = "downloads"
             os.makedirs(output_dir, exist_ok=True)
 
-            # Download and save as .mp3
+            # Download the audio
             file_path = audio_stream.download(output_dir)
             new_file_path = os.path.splitext(file_path)[0] + ".mp3"
-            if not new_file_path.endswith(".mp3"):
+            print(new_file_path)
+            # Convert to .mp3 if necessary
+            if not file_path.endswith(".mp3"):
                 os.rename(file_path, new_file_path)
+            
+            # Re-encode the MP3 file
+            print(f"File path after download: {file_path}")
+            print(f"File path after renaming to MP3: {new_file_path}")
+            print(f"File exists: {os.path.exists(new_file_path)}")
+            fixed_file_path = self.reencode_mp3(new_file_path)
+            if fixed_file_path:
+                new_file_path = fixed_file_path
 
             # Avoid duplicates
             song_name = yt.title
@@ -216,7 +226,18 @@ class MusicTournamentApp:
             messagebox.showinfo("Success", f"Downloaded and added: {song_name}")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to download from YouTube: {e}")
-            
+    
+    #move to its own file later
+    def reencode_mp3(self, file_path):
+        try:
+            audio = AudioSegment.from_file(file_path)
+            new_file_path = os.path.splitext(file_path)[0] + "_fixed.mp3"
+            audio.export(new_file_path, format="mp3")
+            return new_file_path
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to re-encode the file: {e}")
+            return None
+
     def upload_songs(self):
         """Allow user to upload multiple songs by browsing the file system."""
         file_paths = filedialog.askopenfilenames(
