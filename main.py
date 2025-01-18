@@ -4,67 +4,11 @@ import pygame
 from pytubefix import YouTube
 import math
 import os
+from bracket import Bracket
+from match import Match
+from competitor import Competitor
 from styles import configure_styles
 from pydub import AudioSegment
-
-class Competitor:
-    def __init__(self, name, file_path):
-        self.name = name
-        self.file_path = file_path
-
-class Match:
-    def __init__(self, competitor_a, competitor_b):
-        self.competitor_a = competitor_a
-        self.competitor_b = competitor_b
-        self.winner = None
-
-    def set_winner(self, winner):
-        """Set the winner of the match."""
-        if winner not in [self.competitor_a, self.competitor_b]:
-            raise ValueError("Winner must be one of the competitors")
-        self.winner = winner
-
-    def get_winner(self):
-        """Get the winner of the match."""
-        return self.winner
-
-
-class Bracket:
-    def __init__(self, competitors):
-        self.competitors = competitors
-        self.rounds = []  # List of all rounds
-        self.current_round = 0  # Current round index
-        self.generate_bracket()
-
-    def generate_bracket(self):
-        """Generate the tournament bracket."""
-        competitors = [Competitor(name, "") for name in self.competitors]
-
-        # Ensure competitors count is a power of 2
-        next_power_of_2 = 2 ** math.ceil(math.log2(len(competitors)))
-        while len(competitors) < next_power_of_2:
-            competitors.append(Competitor("TBD", ""))
-
-        # First round
-        self.rounds.append([Match(competitors[i], competitors[i + 1]) for i in range(0, len(competitors), 2)])
-
-    def get_current_round_matches(self):
-        """Return the matches for the current round."""
-        return self.rounds[self.current_round]
-
-    def advance_to_next_round(self):
-        """Move to the next round with the current round's winners."""
-        current_matches = self.get_current_round_matches()
-        winners = [match.get_winner() for match in current_matches if match.get_winner()]
-
-        if len(winners) < 2:
-            return None  # Tournament is over
-
-        next_round_matches = [Match(winners[i], winners[i + 1] if i + 1 < len(winners) else None) for i in range(0, len(winners), 2)]
-        self.rounds.append(next_round_matches)
-        self.current_round += 1
-        return next_round_matches
-
 
 
 
@@ -178,6 +122,7 @@ class MusicTournamentApp:
         self.matches = []
         self.current_round = 0
 
+    
     def add_youtube_song(self):
         """Download audio from a YouTube URL and add it as a song."""
         url = self.youtube_entry.get().strip()
@@ -231,9 +176,9 @@ class MusicTournamentApp:
     def reencode_mp3(self, file_path):
         try:
             audio = AudioSegment.from_file(file_path)
-            new_file_path = os.path.splitext(file_path)[0] + "_fixed.mp3"
-            audio.export(new_file_path, format="mp3")
-            return new_file_path
+            
+            audio.export(file_path, format="mp3")
+            return file_path
         except Exception as e:
             messagebox.showerror("Error", f"Failed to re-encode the file: {e}")
             return None
