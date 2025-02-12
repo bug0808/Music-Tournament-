@@ -131,7 +131,7 @@ class MusicTournamentApp:
             return
 
         try:
-            yt = YouTube(url)
+            yt = YouTube(url, 'WEB')#Use WEB client to auto-generate the POToken
             audio_stream = yt.streams.filter(only_audio=True).first()
 
             if not audio_stream:
@@ -144,15 +144,16 @@ class MusicTournamentApp:
             # Download the audio
             file_path = audio_stream.download(output_dir)
             new_file_path = os.path.splitext(file_path)[0] + ".mp3"
-            print(new_file_path)
+            # print(new_file_path)
+            
             # Convert to .mp3 if necessary
             if not file_path.endswith(".mp3"):
                 os.rename(file_path, new_file_path)
             
             # Re-encode the MP3 file
-            print(f"File path after download: {file_path}")
-            print(f"File path after renaming to MP3: {new_file_path}")
-            print(f"File exists: {os.path.exists(new_file_path)}")
+            # print(f"File path after download: {file_path}")
+            # print(f"File path after renaming to MP3: {new_file_path}")
+            # print(f"File exists: {os.path.exists(new_file_path)}")
             fixed_file_path = self.reencode_mp3(new_file_path)
             if fixed_file_path:
                 new_file_path = fixed_file_path
